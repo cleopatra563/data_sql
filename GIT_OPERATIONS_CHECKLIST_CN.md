@@ -1,6 +1,7 @@
 # Git 操作清单
 
 日常开发工作流中必备Git命令的综合指南。
+日常开发核心流程为：git pull → 修改代码 → git add . → git commit -m "说明" → git push
 
 
 ## 目录
