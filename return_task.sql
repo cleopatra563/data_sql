@@ -11,32 +11,36 @@ first_login_during AS (
         user_id,
         MIN(login_time) AS first_login
     FROM user_login_logs
-    WHERE login_time BETWEEN '2026-01-01 00:00:00' AND '2026-01-31 23:59:59'
+    WHERE login_time BETWEEN '2026-01-01 00:00:00' 
+                     AND '2026-01-31 23:59:59'
     GROUP BY user_id
 ),
 
 -- 2. 获取每个用户在统计期间首次登录前的最后登录时间
 last_login_before AS (
-    SELECT 
-        fld.user_id,
-        fld.first_login,
-        MAX(ull.login_time) AS last_login
-    FROM first_login_during fld
-    LEFT JOIN user_login_logs ull ON 
-        ull.user_id = fld.user_id
-        AND ull.login_time < fld.first_login
-    GROUP BY fld.user_id, fld.first_login
+    select *
+        t1.user_id,
+        t1.first_login,
+        max(t2.login_time) as last_login
+    from first_login_during t1
+    left join user_login_logs t2 on 
+        t2.user_id = t1.user_id
+        and t1.first_login <= t2.login_time
+    group by t1.user_id,t1.first_login
 ),
 
 -- 3. 识别目标用户：过去7天未登录的用户
-target_users AS (
-    SELECT 
-        user_id,
-        first_login
-    FROM last_login_before
-    WHERE 
-        -- 使用DATEDIFF计算流失间隔，大于等于7天或首次登录（无历史记录）
-        DATEDIFF(first_login, last_login) >= 7 OR last_login IS NULL
+target_users as(
+    select 
+         user_id
+        ,first_login
+        ,count(distinct user_id)filter(where day_diff >= 7 or last_login is null) is_return
+    from (
+        select * 
+           ,DATEDIFF(first_login, last_login) as day_diff
+        from last_login_before
+      )a   
+    group by user_id,first_login
 ),
 
 -- 4. 获取参与特定任务的用户
@@ -100,13 +104,13 @@ daily_target_users AS (
     SELECT 
         dfl.login_date,
         dfl.user_id,
-        MAX(ull.login_time) AS last_login_before
+        MAX(t1.login_time) AS last_login_before
     FROM daily_first_login dfl
-    LEFT JOIN user_login_logs ull ON 
-        ull.user_id = dfl.user_id
-        AND ull.login_time < dfl.first_login
+    LEFT JOIN user_login_logs t1 ON 
+        t1.user_id = dfl.user_id
+        AND t1.login_time < dfl.first_login
     GROUP BY dfl.login_date, dfl.user_id, dfl.first_login
-    HAVING DATEDIFF(dfl.first_login, last_login_before) >= 7 OR last_login_before IS NULL
+    HAVING DATEDIFF(dfl.first_login, last_login_before) >= 7 OR last_login_before IS Nt1
 ),
 
 -- 4. 每日参与任务用户
