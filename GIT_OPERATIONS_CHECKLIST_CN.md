@@ -2,6 +2,7 @@
 
 日常开发工作流中必备Git命令的综合指南。
 
+
 ## 目录
 
 1. [仓库创建与初始化](#1-仓库创建与初始化)
@@ -18,7 +19,7 @@
 ### 1.1 初始化新的本地仓库
 
 **语法：**
-```bash
+```bash 
 git init
 ```
 
@@ -326,12 +327,12 @@ git pull --rebase origin master
 
 4. 暂存已解决的文件：
    ```bash
-git add <冲突文件>
+   git add <冲突文件>
    ```
 
 5. 完成拉取：
    ```bash
-git commit
+   git commit
    ```
 
 **使用场景：** 当本地更改与远程更改冲突时
@@ -477,12 +478,12 @@ git merge --no-ff -m "合并分支 'feature/authentication'" feature/authenticat
 
 3. 暂存已解决的文件：
    ```bash
-git add <冲突文件>
+   git add <冲突文件>
    ```
 
 4. 完成合并：
    ```bash
-git commit -m "解决合并冲突"
+   git commit -m "解决合并冲突"
    ```
 
 **使用场景：** 合并具有冲突更改的分支时
@@ -634,25 +635,25 @@ git reset --hard HEAD~1
 1. **开始一个新功能：**
    ```bash
    git checkout master
-git pull
-git checkout -b feature/new-feature
+   git pull
+   git checkout -b feature/new-feature
    ```
 
 2. **进行更改并提交：**
    ```bash
    # 编辑文件
-git status
-git add .
-git commit -m "实现新功能"
+   git status
+   git add .
+   git commit -m "实现新功能"
    ```
 
 3. **获取并合并最新更改：**
    ```bash
    git fetch origin
-git checkout master
-git merge origin/master
-git checkout feature/new-feature
-git merge master
+   git checkout master
+   git merge origin/master
+   git checkout feature/new-feature
+   git merge master
    ```
 
 4. **推送到远程：**
@@ -663,9 +664,9 @@ git merge master
 5. **合并到master：**
    ```bash
    git checkout master
-git merge feature/new-feature
-git push
-git branch -d feature/new-feature
+   git merge feature/new-feature
+   git push
+   git branch -d feature/new-feature
    ```
 
 这个清单按照典型开发工作流的逻辑顺序组织，便于在日常开发任务中参考和使用。
