@@ -76,7 +76,7 @@ USE my_database;
 在MySQL命令行界面中执行：
 
 ```sql
-SOURCE e:\workflow\data_sql\import.sql;
+SOURCE e:\workflow\data_sql\import.sql; SHOW WARINGINS;
 ```
 
 **注意：** 路径必须是绝对路径，Windows系统使用反斜杠（\），Linux/Mac使用正斜杠（/）。
