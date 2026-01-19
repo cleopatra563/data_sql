@@ -1,0 +1,9 @@
+git clone https://github.com/cleoaptra563/data_sql.git my_project
+cd my_project
+git fetch --all
+git checkout main
+git pull origin main  # 确保main分支是最新的
+git merge origin/master --allow-unrelated-histories  # 合并master到main 允许合并无关联历史的origin/master分支
+# 解决冲突（如果有）
+git commit -m "Merge master into main"
+git push origin main  # 推送到远程
