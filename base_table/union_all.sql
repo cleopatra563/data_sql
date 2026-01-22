@@ -14,3 +14,16 @@ union
 (select "US",1246.23,2333802,0.54,10472,0.98%,22.40%,892,0.14)
 union
 (select "MX",144.49,232244,0.64,1220,0.98%,13.80%,103,0.14)
+union 
+(select "总计",1958.11,4742345,0.59,23320,0.98%,17.27%,3858,0.18)
+
+select  "IN" as country,
+       cost,
+       show_times,
+       CPM,
+       click,
+       ctr,
+       cvr,
+       install,
+       cpi
+last_value(cost)over(order by country) as last_cost
