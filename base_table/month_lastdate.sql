@@ -39,6 +39,7 @@ select
     ,t1.country
     ,t1.total_money
 from recharge2 t1 
-join last_day t2
+left join last_day t2
     on t1.log_date=t2.last_date
+where t2.last_date is not null
 order by t2.last_date,t1.country

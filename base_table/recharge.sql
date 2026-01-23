@@ -6,21 +6,6 @@
 -- 5,留存拆回流和连续登录
 -- 6,黑产用户分析：单账号多设备/ip充值 单账号多设备登录
 
-with recharge as (SELECT "#account_id"role_id
-                ,"#event_time"log_time
-                ,"$part_date"log_date
-                ,"#zone_offset"
-                ,"#country"
-                ,"#uuid" # 设备id
-                ,sub_game_name as item_name # 购买商品
-                ,cast(game_id as int) as money
-                ,'CNY' as money_type
-                FROM v_event_4 
-                WHERE "$part_event"='game_end'
-                AND "$part_date">='2025-12-29' 
-                AND "$part_date"<='2026-01-07' 
-                )
-
 -- select 
 --  ' ' as "日期"
 -- ,' ' as "国家"
@@ -37,10 +22,10 @@ with recharge as (SELECT "#account_id"role_id
 -- ,' ' as  "Arppu" 充值金额/点击广告用户
 
 -- 大盘数据 
-    新增表 日期+国家  所有用户，广告用户，自然量用户 |lobby_enter ，用户表[te_ads_object.ad_group_id]
-    活跃表 日期+国家  活跃用户，广告用户   |lobby_enter
-    充值表 日期+国家  充值金额            |recharge
-    广告表 日期+国家  点击广告用户，新增广告金额，广告金额     |ad_click
+    -- 新增表 日期+国家  所有用户，广告用户，自然量用户 |lobby_enter ，用户表[te_ads_object.ad_group_id]
+    -- 活跃表 日期+国家  活跃用户，广告用户   |lobby_enter
+    -- 充值表 日期+国家  充值金额            |recharge
+    -- 广告表 日期+国家  点击广告用户，新增广告金额，广告金额     |ad_click
 
 with ad_click as( --游戏内广告点击
 select 
@@ -53,14 +38,16 @@ from ta.v_event_4
 where "$part_event" = 'ad_click'
     and "$part_date" <= '2025-12-29'
     and "$part_date" <= '2026-01-07'
+
 )
 
-,user_log as(-- 活跃表
+,active as(-- 活跃表
 select 
     "#account_id"role_id
-    ,"$part_date"
+    ,"#event_time"log_time
+    ,"$part_date"log_date
     ,"#country"country
-    ,case when install_ad_name is not null then 'install' else 'natural' end as user_type
+    ,"#zone_offset"
 from ta.v_event_4
 where "$part_event" = 'lobby_enter'
     and "$part_date" <= '2025-12-29'
@@ -70,8 +57,68 @@ where "$part_event" = 'lobby_enter'
 
 ,user_dim as( -- 用户维度表
 select        
-    "te_ads_object.ad_group_id@adid"
-    ,"te_ads_object.ad_group_id@amount"
+    "te_ads_object.ad_group_id@adid"as ad_id
+    ,"te_ads_object.ad_group_id@amount"as ad_amount
 from ta_dim.dim_4_1_3247 
 
 )
+
+,ad as( -- 用户表
+select 
+    "#account_id"role_id  
+    ,te_ads_object.ad_group_id as ad_id 
+    ,te_ads_object.ad_group_name as ad_name 
+    ,split_part(te_ads_object.ad_group_name,'-',2) as ad_game_name
+from ta.v_user_4 
+where te_ads_object.ad_group_id is not null
+
+)
+
+,recharge as(
+select 
+    "#account_id"role_id
+    ,"#event_time"log_time
+    ,"$part_date"log_date
+    ,"#zone_offset"
+    ,"#country"
+    ,"#uuid" -- 设备id
+    ,sub_game_name as item_name -- 购买商品
+    ,cast(game_id as int) as money
+    ,'CNY' as money_type
+from v_event_4 
+where "$part_event"='game_end'
+and "$part_date">='2025-12-29' 
+and "$part_date"<='2026-01-07' 
+
+)
+
+-- active left join  left join user_dim
+,active_ad as(
+select 
+    t1.role_id
+    ,t1.log_time
+    ,t1.log_date
+    ,t1.country
+    ,t2.ad_id
+    ,t2.ad_name
+    ,t2.ad_game_name
+    ,t3.ad_amount
+from active t1   
+left join ad t2  
+    on t1.role_id=t2.role_id
+left join user_dim t3
+    on t2.ad_id=t3.ad_id
+
+)
+
+select 
+    role_id
+    ,log_time
+    ,log_date
+    ,country
+    ,ad_id
+    ,ad_name
+    ,ad_game_name
+    ,ad_amount
+    ,case when ad_id is not null then 'click' else 'natural' end as click_type
+from active_ad
