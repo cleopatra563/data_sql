@@ -22,8 +22,8 @@
 -- ,' ' as  "Arppu" 充值金额/点击广告用户
 
 -- 大盘数据 
-    -- 新增表 日期+国家  所有用户，广告用户，自然量用户 |lobby_enter ，用户表[te_ads_object.ad_group_id]
-    -- 活跃表 日期+国家  活跃用户，广告用户   |lobby_enter
+    -- 新增表 日期+国家  所有用户，广告用户，自然量用户 |lobby_enter 
+    -- 活跃表 日期+国家  活跃用户，广告用户   |lobby_enter ，用户表[te_ads_object.ad_group_id]，用户维度表[te_ads_object.ad_group_id@amount]
     -- 充值表 日期+国家  充值金额            |recharge
     -- 广告表 日期+国家  点击广告用户，新增广告金额，广告金额     |ad_click
 
