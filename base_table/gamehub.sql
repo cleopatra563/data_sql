@@ -15,10 +15,12 @@ with df as (select
             from  
                 (
                 SELECT "#account_id"role_id,"#country"reg_country,"#bundle_id"reg_pack,"$part_date"reg_date,"#event_time"reg_time
-                ,IF((("#zone_offset" IS NOT NULL) AND ("#zone_offset" >= -30) AND ("#zone_offset" <= 30)), date_add('second', CAST(((8 - "#zone_offset") * 3600) AS integer), "#event_time"), "#event_time")reg_local_time
+                ,IF((("#zone_offset" IS NOT NULL) AND ("#zone_offset" >= -30) AND ("#zone_offset" <= 30))
+                    , date_add('second', CAST(((8 - "#zone_offset") * 3600) AS integer), "#event_time"), "#event_time")reg_local_time
                 , "#app_version"reg_app_version
                 ,"#install_time"install_time
-                ,IF((("#zone_offset" IS NOT NULL) AND ("#zone_offset" >= -30) AND ("#zone_offset" <= 30)), date_add('second', CAST(((8 - "#zone_offset") * 3600) AS integer), "#event_time"), "#install_time")install_local_time
+                ,IF((("#zone_offset" IS NOT NULL) AND ("#zone_offset" >= -30) AND ("#zone_offset" <= 30))
+                    , date_add('second', CAST(((8 - "#zone_offset") * 3600) AS integer), "#event_time"), "#install_time")install_local_time
                 ,row_number()over(partition by "#account_id" order by cast("#event_time" as timestamp))rn   
                 ,"#device_id"device_id
                 FROM v_event_4 
@@ -29,9 +31,9 @@ with df as (select
             where rn = 1
             )
 ,df1 as (
-        select a.*,is_keep2,is_keep3,is_keep4,is_keep5,is_keep6,is_keep7,lt as lt_cnt
+        select df.*,is_keep2,is_keep3,is_keep4,is_keep5,is_keep6,is_keep7,lt as lt_cnt
         from  
-            df a     
+            df     
         left join   
             (
                 select role_id
@@ -49,7 +51,8 @@ with df as (select
                 from  
                     (
                     select distinct "#account_id"role_id
-                    ,cast(IF((("#zone_offset" IS NOT NULL) AND ("#zone_offset" >= -30) AND ("#zone_offset" <= 30)), date_add('second', CAST(((8 - "#zone_offset") * 3600) AS integer), "#event_time"), "#event_time") as date)local_date
+                    ,cast(IF((("#zone_offset" IS NOT NULL) AND ("#zone_offset" >= -30) AND ("#zone_offset" <= 30))
+                    ,date_add('second', CAST(((8 - "#zone_offset") * 3600) AS integer), "#event_time"), "#event_time") as date)local_date
                     FROM v_event_4 
                     WHERE "$part_event" in ('ta_app_start','enter_game','lobby_enter','login_client')
                     AND "$part_date" between '2025-12-29' and '2026-01-10' 
@@ -61,8 +64,8 @@ with df as (select
                 on a.role_id = b.role_id
                 )t      
             group by role_id  
-            )b      
-        on a.role_id = b.role_id  
+            )t2      
+        on df.role_id = t2.role_id  
         )
 ,df2 as (
         select * ,row_number()over(partition by role_id order by "local_date" desc)rn2  
