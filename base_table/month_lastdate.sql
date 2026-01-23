@@ -42,4 +42,3 @@ from recharge2 t1
 join last_day t2
     on t1.log_date=t2.last_date
 order by t2.last_date,t1.country
-
