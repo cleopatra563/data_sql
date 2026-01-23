@@ -68,10 +68,10 @@ where "$part_event" = 'lobby_enter'
 
 )
 
-,user_table as( -- 用户表
-select 
-    "#account_id"role_id
-from ta.v_user_4
-
+,user_dim as( -- 用户维度表
+select        
+    "te_ads_object.ad_group_id@adid"
+    ,"te_ads_object.ad_group_id@amount"
+from ta_dim.dim_4_1_3247 
 
 )
