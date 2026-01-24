@@ -23,7 +23,7 @@
 
 -- 大盘数据 
     -- 新增表 日期+国家  所有用户，广告用户，自然量用户 |lobby_enter 
-    -- 活跃表 日期+国家  活跃用户，广告用户   |lobby_enter ，用户表[te_ads_object.ad_group_id]，用户维度表[te_ads_object.ad_group_id@amount]
+    -- 活跃表 日期+国家  活跃用户，广告用户，广告金额   |lobby_enter ，用户表[te_ads_object.ad_group_id]，用户维度表[te_ads_object.ad_group_id@amount]
     -- 充值表 日期+国家  充值金额            |recharge
     -- 广告表 日期+国家  点击广告用户，新增广告金额，广告金额     |ad_click
 
@@ -116,22 +116,31 @@ left join user_dim t3
 )
 
 ,reg_ad as( -- 注册广告表
-select 
-    role_id
-    ,min(log_time) over(partition by role_id order by log_time ) as reg_time
-    ,min(log_date) over(partition by role_id order by log_date ) as reg_date
-    ,country
-    ,zone_offset
-    ,uuid
-    ,ad_id
-    ,ad_name
-    ,ad_game_name
-    ,ad_amount
-    ,user_type
-from active_ad
+select
+    select *
+    from(
+        distinct 
+        role_id
+        ,min(log_time) over(partition by role_id order by log_time ) as reg_time
+        ,min(log_date) over(partition by role_id order by log_date ) as reg_date
+        ,country
+        ,zone_offset
+        ,ad_id
+        ,ad_name
+        ,ad_game_name
+        ,ad_amount
+        ,user_type
+    from active_ad
+        )
+    where reg_date >= '2025-12-29'
+        and reg_date <= '2026-01-07'
 )
 
-
-select *
+-- 新增表
+select 
+    reg_date as dt 
+    ,country  
+    ,count(distinct role_id) as new_user_cnt
+    ,count(distinct role_id) filter(where user_type='click') as click_user_cnt 
+    ,count(distinct role_id) filter(where user_type='natural') as nat_user_cnt 
 from reg_ad
-
