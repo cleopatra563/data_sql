@@ -22,10 +22,10 @@
 -- ,' ' as  "Arppu" 充值金额/点击广告用户
 
 -- 大盘数据 
-    -- 新增表 日期+国家  所有用户，广告用户，自然量用户 |lobby_enter 
+    -- 新增表 日期+国家  所有用户，广告用户，自然量用户，广告金额 |lobby_enter 
     -- 活跃表 日期+国家  活跃用户，广告用户，广告金额   |lobby_enter ，用户表[te_ads_object.ad_group_id]，用户维度表[te_ads_object.ad_group_id@amount]
     -- 充值表 日期+国家  充值金额            |recharge
-    -- 广告表 日期+国家  点击广告用户，新增广告金额，广告金额     |ad_click
+    -- 广告表 日期+国家  点击广告用户         |ad_click
 
 with ad_click as( --游戏内广告点击
 select 
@@ -51,20 +51,20 @@ select
     ,"#uuid"uuid -- 设备id
 from ta.v_event_4
 where "$part_event" = 'lobby_enter'
-    and "$part_date" <= '2025-12-29'
+    and "$part_date" >= '2025-12-29'
     and "$part_date" <= '2026-01-07'
 
 )
 
-,user_dim as( -- 用户维度表
+,ad_amount as( -- 广告收益
 select        
     "te_ads_object.ad_group_id@adid"as ad_id
-    ,"te_ads_object.ad_group_id@amount"as ad_amount
+    ,cast("te_ads_object.ad_group_id@amount" as double)as ad_amount
 from ta_dim.dim_4_1_3247 
 
 )
 
-,ad as( -- 用户表
+,ad as( -- 广告维度表
 select 
     "#account_id"role_id  
     ,te_ads_object.ad_group_id as ad_id 
@@ -80,9 +80,9 @@ select
     "#account_id"role_id
     ,"#event_time"log_time
     ,"$part_date"log_date
-    ,"#zone_offset"
-    ,"#country"
-    ,"#uuid" -- 设备id
+    ,"#zone_offset"zone_offset
+    ,"#country"country
+    ,"#uuid"uuid -- 设备id
     ,sub_game_name as item_name -- 购买商品
     ,cast(game_id as int) as money
     ,'CNY' as money_type
@@ -93,7 +93,6 @@ and "$part_date"<='2026-01-07'
 
 )
 
--- active left join ad left join user_dim
 ,active_ad as( -- 活跃广告表
 select 
     t1.role_id
@@ -109,16 +108,16 @@ select
     ,case when t2.ad_id is not null then 'click' else 'natural' end as user_type
 from active t1   
 left join ad t2  
-    on t1.role_id=t2.role_id
-left join user_dim t3
+    on t1.role_id=t2.role_id and 
+left join ad_amount t3
     on t2.ad_id=t3.ad_id
 
 )
 
 ,reg_ad as( -- 注册广告表
-select
-    select *
-    from(
+select *
+from(
+    select 
         distinct 
         role_id
         ,min(log_time) over(partition by role_id order by log_time ) as reg_time
@@ -131,9 +130,9 @@ select
         ,ad_amount
         ,user_type
     from active_ad
-        )
-    where reg_date >= '2025-12-29'
-        and reg_date <= '2026-01-07'
+    ) a
+where reg_date >= '2025-12-29'
+    and reg_date <= '2026-01-07'
 )
 
 -- 新增表
@@ -143,4 +142,9 @@ select
     ,count(distinct role_id) as new_user_cnt
     ,count(distinct role_id) filter(where user_type='click') as click_user_cnt 
     ,count(distinct role_id) filter(where user_type='natural') as nat_user_cnt 
-from reg_ad
+    ,sum(t2.ad_amount) filter(where user_type='click') as click_ad_amount 
+from reg_ad t1  
+left join ad_amount t2
+    on t1.ad_id = t2.ad_id
+group by dt,country
+order by dt asc,coutry asc
