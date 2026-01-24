@@ -47,7 +47,8 @@ select
     ,"#event_time"log_time
     ,"$part_date"log_date
     ,"#country"country
-    ,"#zone_offset"
+    ,"#zone_offset"zone_offset
+    ,"#uuid"uuid -- 设备id
 from ta.v_event_4
 where "$part_event" = 'lobby_enter'
     and "$part_date" <= '2025-12-29'
@@ -74,7 +75,7 @@ where te_ads_object.ad_group_id is not null
 
 )
 
-,recharge as(
+,recharge as( -- 充值表
 select 
     "#account_id"role_id
     ,"#event_time"log_time
@@ -92,17 +93,20 @@ and "$part_date"<='2026-01-07'
 
 )
 
--- active left join  left join user_dim
-,active_ad as(
+-- active left join ad left join user_dim
+,active_ad as( -- 活跃广告表
 select 
     t1.role_id
     ,t1.log_time
     ,t1.log_date
     ,t1.country
+    ,t1.zone_offset
+    ,t1.uuid
     ,t2.ad_id
     ,t2.ad_name
     ,t2.ad_game_name
     ,t3.ad_amount
+    ,case when t2.ad_id is not null then 'click' else 'natural' end as user_type
 from active t1   
 left join ad t2  
     on t1.role_id=t2.role_id
@@ -111,14 +115,23 @@ left join user_dim t3
 
 )
 
+,reg_ad as( -- 注册广告表
 select 
     role_id
-    ,log_time
-    ,log_date
+    ,min(log_time) over(partition by role_id order by log_time ) as reg_time
+    ,min(log_date) over(partition by role_id order by log_date ) as reg_date
     ,country
+    ,zone_offset
+    ,uuid
     ,ad_id
     ,ad_name
     ,ad_game_name
     ,ad_amount
-    ,case when ad_id is not null then 'click' else 'natural' end as click_type
+    ,user_type
 from active_ad
+)
+
+
+select *
+from reg_ad
+
