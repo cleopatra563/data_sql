@@ -50,7 +50,7 @@ select
     ,"#zone_offset"zone_offset
     ,"#uuid"uuid -- 设备id
 from ta.v_event_4
-where "$part_event" = 'lobby_enter'
+where "$part_event" in('ta_app_start','lobby_enter') 
     and "$part_date" >= '2025-12-29'
     and "$part_date" <= '2026-01-07'
 
@@ -108,7 +108,7 @@ select
     ,case when t2.ad_id is not null then 'click' else 'natural' end as user_type
 from active t1   
 left join ad t2  
-    on t1.role_id=t2.role_id and 
+    on t1.role_id=t2.role_id
 left join ad_amount t3
     on t2.ad_id=t3.ad_id
 
@@ -135,16 +135,30 @@ where reg_date >= '2025-12-29'
     and reg_date <= '2026-01-07'
 )
 
--- 新增表
+,new_user as( -- 新增类指标
 select 
     reg_date as dt 
     ,country  
     ,count(distinct role_id) as new_user_cnt
-    ,count(distinct role_id) filter(where user_type='click') as click_user_cnt 
-    ,count(distinct role_id) filter(where user_type='natural') as nat_user_cnt 
-    ,sum(t2.ad_amount) filter(where user_type='click') as click_ad_amount 
+    ,count(distinct role_id) filter(where user_type='click') as click_new_cnt 
+    ,count(distinct role_id) filter(where user_type='natural') as nat_new_cnt 
+    ,sum(t2.ad_amount) filter(where user_type='click') as new_click_ad_amount 
 from reg_ad t1  
 left join ad_amount t2
     on t1.ad_id = t2.ad_id
-group by dt,country
-order by dt asc,coutry asc
+group by 1,2
+
+)
+
+select 
+    log_date as dt
+    ,country  
+    ,count(distinct role_id) as active_user_cnt
+    ,count(distinct role_id) filter(where user_type='click') as click_active_cnt 
+    ,sum(t2.ad_amount) filter(where user_type='click') as active_click_ad_amount 
+from active_ad t1  
+left join ad_amount t2 
+    on t1.ad_id = t2.ad_id
+group by 1,2
+order by dt asc,country asc
+
