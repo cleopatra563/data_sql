@@ -150,6 +150,7 @@ group by 1,2
 
 )
 
+,active_user as( -- 活跃类指标
 select 
     log_date as dt
     ,country  
@@ -162,3 +163,4 @@ left join ad_amount t2
 group by 1,2
 order by dt asc,country asc
 
+)
