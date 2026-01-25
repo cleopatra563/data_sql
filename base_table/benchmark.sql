@@ -18,7 +18,7 @@
 -- ,' ' as  "广告用户" 
 -- ,' ' as  "广告金额"
 -- ,' ' as  "广告用户占比" 广告用户 / 所有用户
--- ,' ' as  "Arpu" 充值金额/所有用户
+-- ,' ' as  "Arpu" 充值金额/活跃用户
 -- ,' ' as  "Arppu" 充值金额/点击广告用户
 
 -- 大盘数据 
@@ -26,6 +26,7 @@
     -- 活跃表 日期+国家  活跃用户，广告用户，广告金额   |lobby_enter ，用户表[te_ads_object.ad_group_id]，用户维度表[te_ads_object.ad_group_id@amount]
     -- 充值表 日期+国家  充值金额            |recharge
     -- 广告表 日期+国家  点击广告用户         |ad_click
+    -- 搭建宽表    select t1.*,t2.* from t1 left join t2 left join t3
 
 with ad_click as( --游戏内广告点击
 select 
@@ -77,20 +78,27 @@ where te_ads_object.ad_group_id is not null
 
 ,recharge as( -- 充值表
 select 
-    "#account_id"role_id
-    ,"#event_time"log_time
-    ,"$part_date"log_date
-    ,"#zone_offset"zone_offset
-    ,"#country"country
-    ,"#uuid"uuid -- 设备id
-    ,sub_game_name as item_name -- 购买商品
-    ,cast(game_id as int) as money
-    ,'CNY' as money_type
-from v_event_4 
-where "$part_event"='game_end'
-and "$part_date">='2025-12-29' 
-and "$part_date"<='2026-01-07' 
-
+    role_id
+    ,log_date
+    ,country
+    ,sum(money) as money
+from (
+    select 
+        "#account_id"role_id
+        ,"#event_time"log_time
+        ,"$part_date"log_date
+        ,"#zone_offset"zone_offset
+        ,"#country"country
+        ,"#uuid"uuid -- 设备id
+        ,sub_game_name as item_name -- 购买商品
+        ,cast(game_id as int) as money
+        ,'CNY' as money_type
+    from v_event_4 
+    where "$part_event"='game_end'
+    and "$part_date">='2025-12-29' 
+    and "$part_date"<='2026-01-07'
+        ) t1
+group by 1,2,3
 )
 
 ,active_ad as( -- 活跃广告表
@@ -152,16 +160,21 @@ group by 1,2
 
 ,active_user as( -- 活跃类指标
 select 
-    log_date as dt
-    ,country  
-    ,count(distinct role_id) as active_user_cnt
-    ,count(distinct role_id) filter(where user_type='click') as click_active_cnt 
-    ,sum(t2.ad_amount) filter(where user_type='click') as active_click_ad_amount 
+    t1.log_date as dt
+    ,t1.country  
+    ,count(distinct t1.role_id) as active_user_cnt
+    ,count(distinct t1.role_id) filter(where user_type='click') as click_active_cnt 
+    ,sum(t2.ad_amount) filter(where user_type='click') as active_click_ad_amount
+    ,sum(t3.money) as active_money
 from active_ad t1  
 left join ad_amount t2 
     on t1.ad_id = t2.ad_id
+left join recharge t3
+    on t1.role_id = t3.role_id
+    and t1.log_date = t3.log_date
 group by 1,2
 -- order by dt asc,country asc
 
 )
 
+-- arpu = 收入 / 活跃人数
