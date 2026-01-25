@@ -161,6 +161,7 @@ from active_ad t1
 left join ad_amount t2 
     on t1.ad_id = t2.ad_id
 group by 1,2
-order by dt asc,country asc
+-- order by dt asc,country asc
 
 )
+
