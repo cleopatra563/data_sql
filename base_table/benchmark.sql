@@ -31,7 +31,7 @@
     -- 广告表 日期+国家  点击广告用户         
     --     |ad_click: ad_id,role_id,log_date,ad_amount
     -- 搭建宽表    
-    --     select t1.*,t2.* from t1 left join t2 on t1.index = t2.index left join t3 t1.index = t3.index
+    --     select t1.*,t2.* from t1 left join t2 on t1.index = t2.index left join t3 on t1.index = t3.index
 
 with ad_click as( --游戏内广告点击
 select 
@@ -197,7 +197,7 @@ left join new_user t2
     and t1.country = t2.country
 where t1.country in ('巴西','印度尼西亚','印度')
 order by dt asc,country asc
-
+ 
 -- select *
 -- from active_user
 -- where country in ('巴西','印度尼西亚','印度')
