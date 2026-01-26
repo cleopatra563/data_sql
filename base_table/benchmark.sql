@@ -78,27 +78,20 @@ where te_ads_object.ad_group_id is not null
 
 ,recharge as( -- 充值表
 select 
-    role_id
-    ,log_date
-    ,country
-    ,sum(money) as money
-from (
-    select 
-        "#account_id"role_id
-        ,"#event_time"log_time
-        ,"$part_date"log_date
-        ,"#zone_offset"zone_offset
-        ,"#country"country
-        ,"#uuid"uuid -- 设备id
-        ,sub_game_name as item_name -- 购买商品
-        ,cast(game_id as int) as money
-        ,'CNY' as money_type
-    from v_event_4 
-    where "$part_event"='game_end'
-    and "$part_date">='2025-12-29' 
-    and "$part_date"<='2026-01-07'
-        ) t1
-group by 1,2,3
+    "#account_id"role_id
+    ,"#event_time"log_time
+    ,"$part_date"log_date
+    ,"#zone_offset"zone_offset
+    ,"#country"country
+    ,"#uuid"uuid -- 设备id
+    ,sub_game_name as item_name -- 购买商品
+    ,cast(game_id as int) as money
+    ,'CNY' as money_type
+from v_event_4 
+where "$part_event"='game_end'
+and "$part_date">='2025-12-29' 
+and "$part_date"<='2026-01-07'
+
 )
 
 ,active_ad as( -- 活跃广告表
@@ -147,10 +140,10 @@ where reg_date >= '2025-12-29'
 select 
     reg_date as dt 
     ,country  
-    ,count(distinct role_id) as new_user_cnt
-    ,count(distinct role_id) filter(where user_type='click') as click_new_cnt 
-    ,count(distinct role_id) filter(where user_type='natural') as nat_new_cnt 
-    ,sum(t2.ad_amount) filter(where user_type='click') as new_click_ad_amount 
+    ,count(distinct role_id) as new_user_cnt -- 新增用户
+    ,count(distinct role_id) filter(where user_type='click') as click_new_cnt --新增买量用户 
+    ,count(distinct role_id) filter(where user_type='natural') as nat_new_cnt -- 新增自然量用户
+    ,sum(t2.ad_amount) filter(where user_type='click') as new_click_ad_amount -- 新增点击广告金额
 from reg_ad t1  
 left join ad_amount t2
     on t1.ad_id = t2.ad_id
@@ -162,14 +155,21 @@ group by 1,2
 select 
     t1.log_date as dt
     ,t1.country  
-    ,count(distinct t1.role_id) as active_user_cnt
-    ,count(distinct t1.role_id) filter(where user_type='click') as click_active_cnt 
-    ,sum(t2.ad_amount) filter(where user_type='click') as active_click_ad_amount
-    ,sum(t3.money) as active_money
+    ,count(distinct t1.role_id) as active_user_cnt -- 活跃用户
+    ,count(distinct t1.role_id) filter(where user_type='click') as click_active_cnt -- 活跃买量用户
+    ,sum(t2.ad_amount) filter(where user_type='click') as active_click_ad_amount -- 活跃广告金额
+    ,sum(t3.money) as active_money -- 活跃充值金额  
 from active_ad t1  
 left join ad_amount t2 
     on t1.ad_id = t2.ad_id
-left join recharge t3
+left join (
+    select 
+        role_id 
+        ,log_date -- 每天
+        ,sum(money) as money
+    from recharge
+    group by 1,2    
+) t3
     on t1.role_id = t3.role_id
     and t1.log_date = t3.log_date
 group by 1,2
