@@ -42,7 +42,7 @@ where "$part_event" = 'ad_click'
 
 )
 
-,active as(-- 活跃表
+,active as(-- 登录表
 select 
     "#account_id"role_id
     ,"#event_time"log_time
@@ -57,7 +57,7 @@ where "$part_event" in('ta_app_start','lobby_enter')
 
 )
 
-,ad_amount as( -- 广告收益
+,ad_amount as( -- 广告收益（消耗）
 select        
     "te_ads_object.ad_group_id@adid"as ad_id
     ,cast("te_ads_object.ad_group_id@amount" as double)as ad_amount
@@ -76,7 +76,7 @@ where te_ads_object.ad_group_id is not null
 
 )
 
-,recharge as( -- 充值表
+,recharge as( -- 订单表
 select 
     "#account_id"role_id
     ,"#event_time"log_time
@@ -143,7 +143,7 @@ select
     ,count(distinct role_id) as new_user_cnt -- 新增用户
     ,count(distinct role_id) filter(where user_type='click') as click_new_cnt --新增买量用户 
     ,count(distinct role_id) filter(where user_type='natural') as nat_new_cnt -- 新增自然量用户
-    ,sum(t2.ad_amount) filter(where user_type='click') as new_click_ad_amount -- 新增点击广告金额
+    ,sum(distinct t2.ad_amount) filter(where user_type='click') as new_click_ad_amount -- 新增点击广告金额
 from reg_ad t1  
 left join ad_amount t2
     on t1.ad_id = t2.ad_id
@@ -157,8 +157,11 @@ select
     ,t1.country  
     ,count(distinct t1.role_id) as active_user_cnt -- 活跃用户
     ,count(distinct t1.role_id) filter(where user_type='click') as click_active_cnt -- 活跃买量用户
-    ,sum(t2.ad_amount) filter(where user_type='click') as active_click_ad_amount -- 活跃广告金额
+    ,cast(count(distinct t1.role_id) filter(where user_type='click') as double) / nullif(count(distinct t1.role_id),0) as click_active_ratio -- 活跃买量用户占比
+    ,sum(distinct t2.ad_amount) filter(where user_type='click') as active_click_ad_amount -- 活跃广告金额
     ,sum(t3.money) as active_money -- 活跃充值金额  
+    ,sum(t3.money) / nullif(count(distinct t1.role_id),0) as arpu -- 活跃充值金额 / 活跃用户
+    ,sum(t3.money) / nullif(count(distinct t3.role_id) filter(where user_type='click'),0) as arppu -- 活跃充值金额 / 活跃付费用户
 from active_ad t1  
 left join ad_amount t2 
     on t1.ad_id = t2.ad_id
@@ -173,8 +176,11 @@ left join (
     on t1.role_id = t3.role_id
     and t1.log_date = t3.log_date
 group by 1,2
--- order by dt asc,country asc
 
 )
 
--- arpu = 收入 / 活跃人数
+
+select *
+from active_user
+where country in ('巴西','印度尼西亚','印度')
+order by dt asc,country asc
