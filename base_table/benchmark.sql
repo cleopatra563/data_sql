@@ -22,11 +22,16 @@
 -- ,' ' as  "Arppu" 充值金额/点击广告用户
 
 -- 大盘数据 
-    -- 新增表 日期+国家  所有用户，广告用户，自然量用户，广告金额 |lobby_enter 
-    -- 活跃表 日期+国家  活跃用户，广告用户，广告金额   |lobby_enter ，用户表[te_ads_object.ad_group_id]，用户维度表[te_ads_object.ad_group_id@amount]
-    -- 充值表 日期+国家  充值金额            |recharge
-    -- 广告表 日期+国家  点击广告用户         |ad_click
-    -- 搭建宽表    select t1.*,t2.* from t1 left join t2 left join t3
+    -- 新增表 日期+国家  所有用户，广告用户，自然量用户，广告金额 
+    --     |lobby_enter: reg_date,country,role_id,user_type
+    -- 活跃表 日期+国家  活跃用户，广告用户，广告金额   
+    --     |lobby_enter ，用户表[te_ads_object.ad_group_id]，用户维度表[te_ads_object.ad_group_id@amount]
+    -- 充值表 日期+国家  充值金额            
+    --     |recharge: role_id,log_date,money,money_type
+    -- 广告表 日期+国家  点击广告用户         
+    --     |ad_click: ad_id,role_id,log_date,ad_amount
+    -- 搭建宽表    
+    --     select t1.*,t2.* from t1 left join t2 on t1.index = t2.index left join t3 t1.index = t3.index
 
 with ad_click as( --游戏内广告点击
 select 
@@ -143,7 +148,7 @@ select
     ,count(distinct role_id) as new_user_cnt -- 新增用户
     ,count(distinct role_id) filter(where user_type='click') as click_new_cnt --新增买量用户 
     ,count(distinct role_id) filter(where user_type='natural') as nat_new_cnt -- 新增自然量用户
-    ,sum(distinct t2.ad_amount) filter(where user_type='click') as new_click_ad_amount -- 新增点击广告金额
+    ,sum(distinct t2.ad_amount) filter(where user_type='click') as new_click_ad_amount -- 新增广告金额
 from reg_ad t1  
 left join ad_amount t2
     on t1.ad_id = t2.ad_id
@@ -179,8 +184,21 @@ group by 1,2
 
 )
 
-
-select *
-from active_user
-where country in ('巴西','印度尼西亚','印度')
+-- 搭建宽表
+select 
+    t1.*
+    ,t2.new_user_cnt -- 新增用户
+    ,t2.click_new_cnt -- 新增买量用户
+    ,t2.nat_new_cnt -- 新增自然量用户
+    ,t2.new_click_ad_amount -- 新增广告金额
+from active_user t1 
+left join new_user t2
+    on t1.dt = t2.dt
+    and t1.country = t2.country
+where t1.country in ('巴西','印度尼西亚','印度')
 order by dt asc,country asc
+
+-- select *
+-- from active_user
+-- where country in ('巴西','印度尼西亚','印度')
+-- order by dt asc,country asc
