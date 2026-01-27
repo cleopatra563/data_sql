@@ -88,7 +88,25 @@ where rn = 1
 
 )
 
-,ad_amount as( -- 广告收益（消耗）
+,recharge as( -- 订单表
+select 
+    "#account_id"role_id
+    ,"#event_time"log_time
+    ,"$part_date"log_date
+    ,"#zone_offset"zone_offset
+    ,"#country"country
+    ,sub_game_name as item_name -- 购买商品
+    ,cast(game_id as int) as money
+
+    ,'CNY' as money_type
+from v_event_4 
+where "$part_event"='game_end'
+and "$part_date">='2025-12-29' 
+and "$part_date"<='2026-01-07'
+
+)
+
+,ad_amount as( -- 广告收益
 select        
     "te_ads_object.ad_group_id@adid"as ad_id
     ,cast("te_ads_object.ad_group_id@amount" as double)as ad_amount
@@ -104,23 +122,6 @@ select
     ,split_part(te_ads_object.ad_group_name,'-',2) as ad_game_name
 from ta.v_user_4 
 where te_ads_object.ad_group_id is not null
-
-)
-
-,recharge as( -- 订单表
-select 
-    "#account_id"role_id
-    ,"#event_time"log_time
-    ,"$part_date"log_date
-    ,"#zone_offset"zone_offset
-    ,"#country"country
-    ,sub_game_name as item_name -- 购买商品
-    ,cast(game_id as int) as money
-    ,'CNY' as money_type
-from v_event_4 
-where "$part_event"='game_end'
-and "$part_date">='2025-12-29' 
-and "$part_date"<='2026-01-07'
 
 )
 
