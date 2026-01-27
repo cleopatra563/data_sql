@@ -49,12 +49,12 @@ where "$part_event" = 'ad_click'
 
 ,active as(-- 登录表
 select 
+    distinct
     "#account_id"role_id
     ,"#event_time"log_time
     ,"$part_date"log_date
     ,"#country"country
     ,"#zone_offset"zone_offset
-    ,"#uuid"uuid -- 设备id
 from ta.v_event_4
 where "$part_event" in('ta_app_start','lobby_enter') 
     and "$part_date" >= '2025-12-29'
@@ -88,7 +88,6 @@ select
     ,"$part_date"log_date
     ,"#zone_offset"zone_offset
     ,"#country"country
-    ,"#uuid"uuid -- 设备id
     ,sub_game_name as item_name -- 购买商品
     ,cast(game_id as int) as money
     ,'CNY' as money_type
@@ -106,7 +105,6 @@ select
     ,t1.log_date
     ,t1.country
     ,t1.zone_offset
-    ,t1.uuid
     ,t2.ad_id
     ,t2.ad_name
     ,t2.ad_game_name

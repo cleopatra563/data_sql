@@ -27,3 +27,11 @@ left join ad t2
     on t1.role_id=t2.role_id
 group by 1,2
 having count(*) >1
+
+select 
+    role_id
+    ,log_time
+    ,count(*)
+from active
+group by 1,2
+having count(*) >1
