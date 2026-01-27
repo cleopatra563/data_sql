@@ -1,7 +1,7 @@
 -- 数据质量检查
     -- 1,重复行（数据膨胀）、缺失行（数据缺失）
 
--- 左/右表唯一性检查
+-- 表唯一性检查
 select role_id,log_date,count(*)
 from active_ad
 group by 1,2
