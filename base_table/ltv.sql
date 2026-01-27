@@ -17,7 +17,7 @@
 with register as(
     select 
         role_id
-        ,min(log_date) over (partition by role_id order by log_date) as reg_date
+        ,log_date as reg_date
         ,country
         ,zone_offset
     from 
@@ -26,20 +26,33 @@ with register as(
         ,"$part_date"log_date
         ,"#country"country
         ,"#zone_offset"zone_offset
+        ,row_number() over (partition by role_id order by "#event_time") as rn
     from ta.v_event_4 
     where "$part_event" in('lobby_enter','ta_app_start')
     and "$part_date" >= '2025-12-29'
     and "$part_date" <= '2026-01-07'
     ) a 
+    where rn = 1
 )
 
+-- 运行和调试
+-- step 1
 select *
 from register
 
+-- -- step 2
+-- select role_id,reg_date,count(*)
+-- from register
+-- group by role_id,reg_date
+-- having count(*)>1
+
+-- -- step 3
+-- select *
+-- from register
+-- where role_id in ('7603ae366460a0bb')
 
 
-
--- 充值表(内购)
+-- 订单表(IAP)
 
 
 
@@ -51,11 +64,15 @@ from register
 
 
 
--- 按用户，7d_money
+
+-- 按用户，计算total_money_7d
 
 
 
--- 补充z:广告收益表（观看广告）
+
+
+
+-- 补充:广告收益表（IAA）
 
 
 

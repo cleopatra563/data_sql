@@ -119,14 +119,20 @@ left join ad_amount t3
 )
 
 ,reg_ad as( -- 注册广告表
-select *
+select 
+    role_id
+    ,log_date as reg_date
+    ,zone_offset
+    ,ad_id
+    ,ad_name
+    ,ad_game_name
+    ,ad_amount
+    ,user_type
 from(
     select 
-        distinct 
         role_id
-        ,min(log_time) over(partition by role_id order by log_time ) as reg_time
-        ,min(log_date) over(partition by role_id order by log_date ) as reg_date
-        ,country
+        ,log_date
+        ,row_number() over (partition by role_id order by log_time) as rn
         ,zone_offset
         ,ad_id
         ,ad_name
@@ -137,6 +143,7 @@ from(
     ) a
 where reg_date >= '2025-12-29'
     and reg_date <= '2026-01-07'
+    and rn = 1
 )
 
 ,new_user as( -- 新增类指标
