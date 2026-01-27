@@ -62,6 +62,32 @@ where "$part_event" in('ta_app_start','lobby_enter')
 
 )
 
+,register as ( -- 注册表
+select 
+    role_id
+    ,log_date
+    ,country
+    ,zone_offset
+from(
+    select *
+        ,row_number() over(partition by role_id order by log_time) as rn
+    from(    
+        select 
+            "#account_id"role_id
+            ,"$part_date"log_date
+            ,"#country"country
+            ,"#zone_offset"zone_offset
+            ,"#event_time"log_time
+        from ta.v_event_4 
+        where "$part_event" in('lobby_enter','ta_app_start')
+        and "$part_date" >= '2025-12-29'
+        and "$part_date" <= '2026-01-07'
+        ) a         
+    ) b        
+where rn = 1
+
+)
+
 ,ad_amount as( -- 广告收益（消耗）
 select        
     "te_ads_object.ad_group_id@adid"as ad_id
@@ -101,7 +127,6 @@ and "$part_date"<='2026-01-07'
 ,active_ad as( -- 活跃广告表
 select 
     t1.role_id
-    ,t1.log_time
     ,t1.log_date
     ,t1.country
     ,t1.zone_offset
@@ -120,30 +145,21 @@ left join ad_amount t3
 
 ,reg_ad as( -- 注册广告表
 select 
-    role_id
-    ,log_date as reg_date
-    ,zone_offset
-    ,ad_id
-    ,ad_name
-    ,ad_game_name
-    ,ad_amount
-    ,user_type
-from(
-    select 
-        role_id
-        ,log_date
-        ,row_number() over (partition by role_id order by log_time) as rn
-        ,zone_offset
-        ,ad_id
-        ,ad_name
-        ,ad_game_name
-        ,ad_amount
-        ,user_type
-    from active_ad
-    ) a
-where reg_date >= '2025-12-29'
-    and reg_date <= '2026-01-07'
-    and rn = 1
+    t1.role_id
+    ,t1.log_date reg_date
+    ,t1.country
+    ,t1.zone_offset
+    ,t2.ad_id
+    ,t2.ad_name
+    ,t2.ad_game_name
+    ,t3.ad_amount
+    ,case when t2.ad_id is not null then 'click' else 'natural' end as user_type
+from register t1 
+left join ad t2
+    on t1.role_id = t2.role_id
+left join ad_amount t3
+    on t2.ad_id = t3.ad_id
+
 )
 
 ,new_user as( -- 新增类指标

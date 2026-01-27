@@ -15,45 +15,47 @@
 
 -- 注册表
 with register as(
-    select 
-        role_id
-        ,log_date as reg_date
-        ,country
-        ,zone_offset
-    from 
-    (select 
-        "#account_id"role_id
-        ,"$part_date"log_date
-        ,"#country"country
-        ,"#zone_offset"zone_offset
-        ,row_number() over (partition by role_id order by "#event_time") as rn
-    from ta.v_event_4 
-    where "$part_event" in('lobby_enter','ta_app_start')
-    and "$part_date" >= '2025-12-29'
-    and "$part_date" <= '2026-01-07'
-    ) a 
-    where rn = 1
+select 
+    role_id
+    ,log_date
+    ,country
+    ,zone_offset
+from(
+    select *
+        ,row_number() over(partition by role_id order by log_time) as rn
+    from(    
+        select 
+            "#account_id"role_id
+            ,"$part_date"log_date
+            ,"#country"country
+            ,"#zone_offset"zone_offset
+            ,"#event_time"log_time 
+        from ta.v_event_4 
+        where "$part_event" in('lobby_enter','ta_app_start')
+        and "$part_date" >= '2025-12-29'
+        and "$part_date" <= '2026-01-07'
+        ) a         
+    ) b        
+where rn = 1
 )
 
--- 运行和调试
--- step 1
-select *
-from register
-
--- -- step 2
--- select role_id,reg_date,count(*)
--- from register
--- group by role_id,reg_date
--- having count(*)>1
-
--- -- step 3
--- select *
--- from register
--- where role_id in ('7603ae366460a0bb')
-
-
 -- 订单表(IAP)
-
+,recharge as(
+    select 
+        ,"#account_id"role_id
+        ,"$part_date" log_date
+        ,"#event_time" log_time 
+        ,"#country" country
+        ,"#zone_offset" zone_offset
+        ,sub_game_name as item_name -- 购买商品
+        ,cast(game_id as int) as money
+        ,'CNY' as money_type
+    from ta.v_event_4 
+    where "$part_event" in('game_end')
+    and "$part_date" >= '2025-12-29'
+    and "$part_date" <= '2026-01-07'
+    
+)
 
 
 
@@ -77,5 +79,19 @@ from register
 
 
 
+-- 运行和调试
+-- step 1
+-- select *
+-- from register
 
+-- -- step 2
+-- select role_id,reg_date,count(*)
+-- from register
+-- group by 1,2
+-- having count(*)>1
+
+-- -- step 3
+-- select *
+-- from register
+-- where role_id in ('7603ae366460a0bb')
 

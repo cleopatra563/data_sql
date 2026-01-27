@@ -19,9 +19,7 @@ where role_id in ('7603ae366460a0bb')
 
 -- 表唯一性检查
 select 
-    role_id
-    ,log_date
-    ,count(*)
+    role_id,log_date,count(*)
 from active_ad
 group by 1,2
 having count(*)>1
@@ -56,6 +54,7 @@ from active
 group by 1,2
 having count(*) >1
 
+-- 实际查询
 select 
     t1.reg_date 
     ,count(distinct t1.role_id) as user_cnt  
