@@ -44,6 +44,7 @@ where rn = 1
 select 
     role_id
     ,pay_date
+    ,item_name -- 多加一列，是否会引起数据膨胀
     ,sum(money) as money
 from(
     select 
@@ -60,7 +61,7 @@ from(
     and "$part_date" >= '2025-12-29'
     and "$part_date" <= '2026-01-07'
     ) a   
-group by 1,2
+group by 1,2,3
 )
 
 -- 注册充值表+辅助列(day_diff)
@@ -68,7 +69,8 @@ group by 1,2
 select 
     t1.*
     ,t2.pay_date
-    ,t2.money as pay_money
+    ,t2.item_name
+    ,coalesce(t2.money,0) as pay_money
     ,date_diff('day',date(t1.reg_date),date(t2.pay_date))+1 as day_diff
 from register t1
 left join recharge t2
@@ -76,12 +78,11 @@ left join recharge t2
     and t1.reg_date <= t2.pay_date
 )
 
--- 按用户，计算total_money_7d
+-- 按用户，计算首日~7日总充值
 ,user_money as(
 select 
     role_id
     ,reg_date
-    -- 首日充值
     ,sum(pay_money)filter(where day_diff = 1) as first_day_money
     ,sum(pay_money) filter(where day_diff <=2 ) as second_day_money
     ,sum(pay_money) filter(where day_diff <=3 ) as third_day_money
@@ -98,38 +99,52 @@ group by 1,2
 select 
     reg_date
     ,count(distinct role_id) as user_cnt
-    ,sum(pay_money,0) filter(where day_diff = 1) / nullif(count(distinct role_id),0) as ltv_1d
-    ,sum(pay_money,0) filter(where day_diff <= 2) / nullif(count(distinct role_id),0) as ltv_2d
-    ,sum(pay_money,0) filter(where day_diff <= 3) / nullif(count(distinct role_id),0) as ltv_3d
-    ,sum(pay_money,0) filter(where day_diff <= 4) / nullif(count(distinct role_id),0) as ltv_4d
-    ,sum(pay_money,0) filter(where day_diff <= 5) / nullif(count(distinct role_id),0) as ltv_5d
-    ,sum(pay_money,0) filter(where day_diff <= 6) / nullif(count(distinct role_id),0) as ltv_6d
-    ,sum(pay_money,0) filter(where day_diff <= 7) / nullif(count(distinct role_id),0) as ltv_7d
+    ,cast(sum(pay_money) filter(where day_diff = 1) as double) / nullif(count(distinct role_id),0) as ltv_1d
+    ,cast(sum(pay_money) filter(where day_diff <= 2) as double) / nullif(count(distinct role_id),0) as ltv_2d
+    ,cast(sum(pay_money) filter(where day_diff <= 3) as double) / nullif(count(distinct role_id),0) as ltv_3d
+    ,cast(sum(pay_money) filter(where day_diff <= 4) as double) / nullif(count(distinct role_id),0) as ltv_4d
+    ,cast(sum(pay_money) filter(where day_diff <= 5) as double) / nullif(count(distinct role_id),0) as ltv_5d
+    ,cast(sum(pay_money) filter(where day_diff <= 6) as double) / nullif(count(distinct role_id),0) as ltv_6d
+    ,cast(sum(pay_money) filter(where day_diff <= 7) as double) / nullif(count(distinct role_id),0) as ltv_7d
+from register_recharge
 group by 1
 )
 
+-- 按商品，计算首日~7日LTV
+,item_ltv as(
+select
+    reg_date
+    ,item_name
+    ,count(distinct role_id) as item_user_cnt 
+    ,cast(sum(pay_money)filter(where day_diff = 1) as double) / nullif(count(distinct role_id),0) as item_ltv_1d
+    ,cast(sum(pay_money)filter(where day_diff <= 2) as double) / nullif(count(distinct role_id),0) as item_ltv_2d
+    ,cast(sum(pay_money)filter(where day_diff <= 3) as double) / nullif(count(distinct role_id),0) as item_ltv_3d
+    ,cast(sum(pay_money)filter(where day_diff <= 4) as double) / nullif(count(distinct role_id),0) as item_ltv_4d
+    ,cast(sum(pay_money)filter(where day_diff <= 5) as double) / nullif(count(distinct role_id),0) as item_ltv_5d
+    ,cast(sum(pay_money)filter(where day_diff <= 6) as double) / nullif(count(distinct role_id),0) as item_ltv_6d
+    ,cast(sum(pay_money)filter(where day_diff <= 7) as double) / nullif(count(distinct role_id),0) as item_ltv_7d
+from register_recharge
+group by 1,2
 
+)
 
--- 子商品贡献度
-
+-- 子商品7日贡献度
+,item_contribution as(
+select
+    t1.reg_date
+    ,t1.item_name
+    ,item_ltv_7d / ltv_7d as contribution
+from item_ltv t1
+left join ltv  t2
+    on t1.reg_date = t2.reg_date
+)
 
 -- 补充:广告收益表（IAA）
 
 
 
 
--- 运行和调试
--- step 1
--- select *
--- from register
 
--- -- step 2
--- select role_id,reg_date,count(*)
--- from register
--- group by 1,2
--- having count(*)>1
-
--- -- step 3
--- select *
--- from register
--- where role_id in ('7603ae366460a0bb')
+select * 
+from item_ltv 
+order by reg_date, item_name
