@@ -13,7 +13,7 @@
 --     2、7日内总充值金额（7d_money） ps 内购+广告 sum()
 --     3、按注册日期分组，计算7日LTV
 
--- 注册表
+-- 注册表,选最早时间戳记录
 with register as(
 select 
     role_id
