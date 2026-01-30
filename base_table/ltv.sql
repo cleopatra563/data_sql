@@ -67,15 +67,16 @@ group by 1,2,3
 -- 注册充值表+辅助列(day_diff)
 ,register_recharge as(
 select 
-    t1.*
-    ,t2.pay_date
-    ,t2.item_name
-    ,coalesce(t2.money,0) as pay_money
-    ,date_diff('day',date(t1.reg_date),date(t2.pay_date))+1 as day_diff
-from register t1
-left join recharge t2
+    t2.reg_date
+    ,t1.pay_date
+    ,t1.role_id
+    ,t1.item_name
+    ,coalesce(t1.money,0) as pay_money
+    ,date_diff('day',date(t2.reg_date),date(t1.pay_date))+1 as day_diff
+from recharge t1
+left join register t2
     on t1.role_id = t2.role_id
-    and t1.reg_date <= t2.pay_date
+    and t2.reg_date <= t1.pay_date
 )
 
 -- 按用户，计算首日~7日总充值

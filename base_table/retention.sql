@@ -71,16 +71,16 @@ where rn = 1
 ,register_login as(
 select 
     t1.role_id
-    ,t1.reg_date
-    ,t2.log_date
+    ,t1.log_date
+    ,t2.reg_date
     ,t1.country
     ,t1.zone_offset
     ,t1.uuid
-    ,date_diff('day',date(t1.reg_date),date(t2.log_date))+1 as day_diff
-from register t1 
-left join login t2
+    ,date_diff('day',date(t2.reg_date),date(t1.log_date))+1 as day_diff
+from login t1 
+left join register t2  -- 小表连大表，小表作为左表
     on t1.role_id=t2.role_id
-    and t1.reg_date<=t2.log_date
+    and t2.reg_date<=t1.log_date
 
 )
 
@@ -93,10 +93,41 @@ select
     ,zone_offset
     ,uuid
     ,count(distinct case when day_diff =1 then role_id else null end) as day_1_retention
+    ,count(distinct case when day_diff = 2 then role_id else null end) as day_2_retention
+    ,count(distinct case when day_diff = 3 then role_id else null end) as day_3_retention
 
 from register_login
 group by 1,2,3,4,5
 )
 
+-- 流失用户，窗口期：连续3天未登录
+
+
+
+
+-- 回流用户，窗口期：连续3天未登录，最近7天有登录 ,登录表   流失表
+
+
+
+
+-- 回流率 = 流失用户数 / 流失用户
+
+
+
+
+-- 流失率 = 流失用户 / 活跃用户
+
+
+
+
+-- 连续登录用户
+
+
+
+
+
+
+
+
 select *
-from user_retention
+from your_table 
