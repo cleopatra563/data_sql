@@ -50,4 +50,3 @@ group by 1
 -- login_time处理
 date_format(from_unixtime(login_time/1000),'%Y-%m-%d %H:%m:%s') as login_time
 'yyyy-MM-dd HH:mm:ss.SSS'
-
