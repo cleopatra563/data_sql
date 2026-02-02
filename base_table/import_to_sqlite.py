@@ -66,7 +66,7 @@ def create_ad_statistics_table():
         conn.close()
 
 def parse_sql_data():
-    """解析SQL文件内容，提取数据行"""
+    """解析SQL文件内容,提取数据行"""
     # 直接返回硬编码的数据，因为SQL文件格式复杂
     # 这样可以确保数据格式正确
     return [
