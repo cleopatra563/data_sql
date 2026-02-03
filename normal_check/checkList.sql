@@ -50,3 +50,18 @@ group by 1
 -- login_time处理
 date_format(from_unixtime(login_time/1000),'%Y-%m-%d %H:%m:%s') as login_time
 'yyyy-MM-dd HH:mm:ss.SSS'
+
+-- 重点校验
+-- 用户属性：
+--   #country
+--   #country_code
+
+-- 公共字段：
+--   total_duration
+--   duration_time
+--   #event_time
+--   #account_id
+--   #device_id
+
+-- 时区字段：
+--   #zone_offset
