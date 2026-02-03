@@ -15,6 +15,7 @@ with dialog_show as( -- 流量情况下提示弹窗
     ,"$part_date"
     ,"#zone_offset"
    ,"#country_code"
+   ,"#country"
    ,"#device_id"
    ,"#app_version"
    ,"app_name"
@@ -36,6 +37,7 @@ where "$part_event"='sdk_lebian_dialog_show'
     ,"$part_date"
     ,"#zone_offset"
    ,"#country_code"
+   ,"#country"
    ,"#device_id"
    ,"#app_version"
    ,"app_name"
@@ -54,31 +56,130 @@ where "$part_event"='sdk_lebian_dialog_show'
     "#user_id"
     ,"#account_id"
     ,"#distinct_id"
-    ,role_id
-    ,"#device_id"
+    ,"$part_event"
+    ,"#event_time"
+    ,"$part_date"
+    ,"#zone_offset"
+   ,"#country_code"
+   ,"#country"
+   ,"#device_id"
+   ,"#app_version"
+   ,"app_name"
+   ,"sdk_version"
+   ,"server_id"
+   ,"server_name"
    from v_event_15  
    where "$part_event"='sdk_lebian_dialog_click_later' 
    and ${PartDate:date} 
    and isTraffic=1
 )
 
-
 -- 开始下载 sdk_lebian_dialog_download_start/sdk_lebian_download_start
-
-
-
+,download_start as(
+   select 
+    "#user_id"
+    ,"#account_id"
+    ,"#distinct_id"
+    ,"$part_event"
+    ,"#event_time"
+    ,"$part_date"
+    ,"#zone_offset"
+   ,"#country_code"
+   ,"#country"
+   ,"#device_id"
+   ,"#app_version"
+   ,"app_name"
+   ,"sdk_version"
+   ,"server_id"
+   ,"server_name"
+   from v_event_15  
+   where "$part_event" in('sdk_lebian_dialog_download_start','sdk_lebian_download_start') 
+   and ${PartDate:date} 
+   and isTraffic=1
+)
 
 -- 下载进度 （25% 50% 75%三节点上报） sdk_lebian_download_progress
-
-
-
-
+,download_progress as(
+   select 
+    "#user_id"
+    ,"#account_id"
+    ,"#distinct_id"
+    ,"$part_event"
+    ,"#event_time"
+    ,"$part_date"
+    ,"#zone_offset"
+   ,"#country_code"
+   ,"#country"
+   ,"#device_id"
+   ,"#app_version"
+   ,"app_name"
+   ,"sdk_version"
+   ,"server_id"
+   ,"server_name"
+   from v_event_15  
+   where "$part_event"='sdk_lebian_download_progress' 
+   and ${PartDate:date} 
+   and isTraffic=1
+   
+)
 
 -- 下载资源完成 sdk_lebian_download_finish
+,download_finish as(
+   select 
+    "#user_id"
+    ,"#account_id"
+    ,"#distinct_id"
+    ,"$part_event"
+    ,"#event_time"
+    ,"$part_date"
+    ,"#zone_offset"
+   ,"#country_code"
+   ,"#country"
+   ,"#device_id"
+   ,"#app_version"
+   ,"app_name"
+   ,"sdk_version"
+   ,"server_id"
+   ,"server_name"
+   from v_event_15  
+   where "$part_event"='sdk_lebian_download_finish' 
+   and ${PartDate:date} 
+   and isTraffic=1
+   
+)
 
+-- select *
+-- from click_download
 
+-- 各个环节的下载漏斗 #app_version = '0.0.17' no wifi流量环境
+,dialog_show_num as(
+select 
+   "#device_id"
+   ,count(distinct "#device_id") as dialog_show
+from dialog_show
+group by 1   
+)
 
-
-
-select *
+,click_download_num as(
+select 
+   "#device_id"
+   ,count(distinct "#device_id") as click_download
 from click_download
+group by 1   
+)
+,click_later_num as(
+select 
+   "#device_id"
+   ,count(distinct "#device_id") as click_later
+from click_later
+group by 1   
+)
+
+select 
+   a."#device_id"
+   ,a.dialog_show
+   ,b.click_download
+   ,c.click_later
+from dialog_show_num a
+left join click_download_num b on a."#distinct_id" = b."#distinct_id"
+left join click_later_num c on a."#distinct_id" = c."#distinct_id"
