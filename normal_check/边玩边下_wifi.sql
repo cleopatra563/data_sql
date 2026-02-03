@@ -1,9 +1,9 @@
 -- 流程介绍:
 -- 流量情况下：
 -- sdk_lebian_dialog_show
--- sdk_lebian_dialog_click_download ,isTraffic=1
--- sdk_lebian_dialog_download_start ,isTraffic=1
--- sdk_lebian_download_progress,isTraffic=1
+-- sdk_lebian_dialog_click_download ,isTraffic=0
+-- sdk_lebian_dialog_download_start ,isTraffic=0
+-- sdk_lebian_download_progress,isTraffic=0
 
 with dialog_show as( -- 流量情况下提示弹窗
    select 
@@ -47,7 +47,7 @@ where "$part_event"='sdk_lebian_dialog_show'
    from v_event_15  
    where "$part_event"='sdk_lebian_dialog_click_download' 
    and ${PartDate:date} 
-   and isTraffic=1
+   and isTraffic=0
 )
 
 -- 弹窗点击以后下载 sdk_lebian_dialog_click_later
@@ -71,7 +71,7 @@ where "$part_event"='sdk_lebian_dialog_show'
    from v_event_15  
    where "$part_event"='sdk_lebian_dialog_click_later' 
    and ${PartDate:date} 
-   and isTraffic=1
+   and isTraffic=0
 )
 
 -- 开始下载 sdk_lebian_dialog_download_start/sdk_lebian_download_start
@@ -95,7 +95,7 @@ where "$part_event"='sdk_lebian_dialog_show'
    from v_event_15  
    where "$part_event" in('sdk_lebian_dialog_download_start','sdk_lebian_download_start') 
    and ${PartDate:date} 
-   and isTraffic=1
+   and isTraffic=0
 )
 
 -- 下载进度 （25% 50% 75%三节点上报） sdk_lebian_download_progress
@@ -119,7 +119,7 @@ where "$part_event"='sdk_lebian_dialog_show'
    from v_event_15  
    where "$part_event"='sdk_lebian_download_progress' 
    and ${PartDate:date} 
-   and isTraffic=1
+   and isTraffic=0
    
 )
 
@@ -144,7 +144,7 @@ where "$part_event"='sdk_lebian_dialog_show'
    from v_event_15  
    where "$part_event"='sdk_lebian_download_finish' 
    and ${PartDate:date} 
-   and isTraffic=1
+   and isTraffic=0
    
 )
 
@@ -162,16 +162,16 @@ group by 1
 
 ,click_download_num as(
 select 
-   "#device_id"
+   "#device_id"  
    ,count(distinct "#device_id") as click_download
 from click_download
 group by 1   
 )
-,click_later_num as(
+,click_start_num as(
 select 
    "#device_id"
-   ,count(distinct "#device_id") as click_later
-from click_later
+   ,count(distinct "#device_id") as click_start
+from download_start
 group by 1   
 )
 
@@ -179,7 +179,7 @@ select
    a."#device_id"
    ,a.dialog_show
    ,b.click_download
-   ,c.click_later
+   ,c.click_start
 from dialog_show_num a
-left join click_download_num b on a."#distinct_id" = b."#distinct_id"
-left join click_later_num c on a."#distinct_id" = c."#distinct_id"
+left join click_download_num b on a."#device_id" = b."#device_id"
+left join click_start_num c on a."#device_id" = c."#device_id"
