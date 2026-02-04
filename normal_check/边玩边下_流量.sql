@@ -158,7 +158,7 @@ where "$part_event"='sdk_lebian_dialog_show'
 -- from click_download
 
 -- 各个环节的下载漏斗 #app_version = '0.0.17' no wifi流量环境
-,dialog_show_num as(
+,dialog_show_device_num as(
 select 
    "#device_id"
    ,count(*) as dialog_show
@@ -166,7 +166,7 @@ from dialog_show
 group by 1   
 )
 
-,click_download_num as(
+,click_download_device_num as(
 select 
    "#device_id"  
    ,count(*) as click_download
@@ -174,7 +174,7 @@ from click_download
 group by 1   
 )
 
-,download_start_num as(
+,download_start_device_num as(
 select 
    "#device_id"
    ,count(*) as download_start
@@ -182,7 +182,7 @@ from download_start
 group by 1   
 )
 
-,download_progress_num as(
+,download_progress_device_num as(
 select 
     "#device_id"
     ,count(*) as download_progress
@@ -190,7 +190,7 @@ from download_progress
 group by 1
 )
 
-,download_finish_num as(
+,download_finish_device_num as(
 select 
    "#device_id"
    ,count(*) as download_finish
@@ -211,11 +211,29 @@ group by 1
 -- left join download_progress_num e on a."#device_id" = e."#device_id"
 -- left join download_finish_num f on a."#device_id" = f."#device_id"
 
-select "#device_id",*
-from dialog_show
-where "#device_id" = '9383cb203233a548'
-order by "#event_time"
+-- select "#device_id",*
+-- from dialog_show
+-- where "#device_id" = '9383cb203233a548'
+-- order by "#event_time"
 
 -- 按照device_id分组，统计对应行数
 -- count(*)
 
+
+select 
+   date(a."#event_time") as dt 
+   ,count(distinct a."#device_id") as dialog_show_num
+   ,count(distinct b."#device_id") as click_download_num
+   ,count(distinct c."#device_id") as download_start_num
+   ,count(distinct d."#device_id") as download_progress_num
+   ,count(distinct e."#device_id") as download_finish_num
+from dialog_show a 
+left join click_download b on a."#device_id" = b."#device_id" and date(a."#event_time") = date(b."#event_time")
+left join download_start c on a."#device_id" = c."#device_id" and date(a."#event_time") = date(c."#event_time")
+left join download_progress d on a."#device_id" = d."#device_id" and date(a."#event_time") = date(d."#event_time")
+left join download_finish e on a."#device_id" = e."#device_id" and date(a."#event_time") = date(e."#event_time")
+group by 1
+
+select 
+from dialog_show a  
+left join 

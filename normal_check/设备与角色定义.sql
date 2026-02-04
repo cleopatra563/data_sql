@@ -14,4 +14,4 @@ select
     ,count(*) as 
 from ta.v_event_15
 where "$part_date" = '2026-02-02'
--- 算占比 nullif(,0)
+-- 算占比 nullif(,0) 
