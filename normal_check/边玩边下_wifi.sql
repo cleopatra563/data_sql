@@ -155,7 +155,7 @@ where "$part_event"='sdk_lebian_dialog_show'
 ,dialog_show_num as(
 select 
    "#device_id"
-   ,count(distinct "#device_id") as dialog_show
+   ,count(*) as dialog_show
 from dialog_show
 group by 1   
 )
@@ -163,15 +163,32 @@ group by 1
 ,click_download_num as(
 select 
    "#device_id"  
-   ,count(distinct "#device_id") as click_download
+   ,count(*) as click_download
 from click_download
 group by 1   
 )
-,click_start_num as(
+
+,download_start_num as(
 select 
    "#device_id"
-   ,count(distinct "#device_id") as click_start
+   ,count(*) as download_start
 from download_start
+group by 1   
+)
+
+,download_progress_num as(
+select 
+    "#device_id"
+    ,count(*) as download_progress
+from download_progress 
+group by 1
+)
+
+,download_finish_num as(
+select 
+   "#device_id"
+   ,count(*) as download_finish
+from download_finish
 group by 1   
 )
 
@@ -180,6 +197,11 @@ select
    ,a.dialog_show
    ,b.click_download
    ,c.click_start
+   ,d.download_start
+   ,e.download_progress
+   ,f.download_finish
 from dialog_show_num a
 left join click_download_num b on a."#device_id" = b."#device_id"
-left join click_start_num c on a."#device_id" = c."#device_id"
+left join download_start_num d on a."#device_id" = d."#device_id"
+left join download_progress_num e on a."#device_id" = e."#device_id"
+left join download_finish_num f on a."#device_id" = f."#device_id"
