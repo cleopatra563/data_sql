@@ -10,6 +10,7 @@ with dialog_show as( -- 流量情况下提示弹窗
     "#user_id"
     ,"#account_id"
     ,"#distinct_id"
+    ,"#uuid"
     ,"$part_event"
     ,"#event_time"
     ,"$part_date"
@@ -32,6 +33,7 @@ where "$part_event"='sdk_lebian_dialog_show'
     "#user_id"
     ,"#account_id"
     ,"#distinct_id"
+    ,"#uuid"
     ,"$part_event"
     ,"#event_time"
     ,"$part_date"
@@ -56,6 +58,7 @@ where "$part_event"='sdk_lebian_dialog_show'
     "#user_id"
     ,"#account_id"
     ,"#distinct_id"
+    ,"#uuid"
     ,"$part_event"
     ,"#event_time"
     ,"$part_date"
@@ -80,6 +83,7 @@ where "$part_event"='sdk_lebian_dialog_show'
     "#user_id"
     ,"#account_id"
     ,"#distinct_id"
+    ,"#uuid"
     ,"$part_event"
     ,"#event_time"
     ,"$part_date"
@@ -104,6 +108,7 @@ where "$part_event"='sdk_lebian_dialog_show'
     "#user_id"
     ,"#account_id"
     ,"#distinct_id"
+    ,"#uuid"
     ,"$part_event"
     ,"#event_time"
     ,"$part_date"
@@ -129,6 +134,7 @@ where "$part_event"='sdk_lebian_dialog_show'
     "#user_id"
     ,"#account_id"
     ,"#distinct_id"
+    ,"#uuid"
     ,"$part_event"
     ,"#event_time"
     ,"$part_date"
@@ -192,15 +198,24 @@ from download_finish
 group by 1   
 )
 
-select 
-   a."#device_id"
-   ,a.dialog_show
-   ,b.click_download
-   ,d.download_start
-   ,e.download_progress
-   ,f.download_finish
-from dialog_show_num a
-left join click_download_num b on a."#device_id" = b."#device_id"
-left join download_start_num d on a."#device_id" = d."#device_id"
-left join download_progress_num e on a."#device_id" = e."#device_id"
-left join download_finish_num f on a."#device_id" = f."#device_id"
+-- select 
+--    a."#device_id"
+--    ,a.dialog_show
+--    ,b.click_download
+--    ,d.download_start
+--    ,e.download_progress
+--    ,f.download_finish
+-- from dialog_show_num a
+-- left join click_download_num b on a."#device_id" = b."#device_id"
+-- left join download_start_num d on a."#device_id" = d."#device_id"
+-- left join download_progress_num e on a."#device_id" = e."#device_id"
+-- left join download_finish_num f on a."#device_id" = f."#device_id"
+
+select "#device_id",*
+from dialog_show
+where "#device_id" = '9383cb203233a548'
+order by "#event_time"
+
+-- 按照device_id分组，统计对应行数
+-- count(*)
+
