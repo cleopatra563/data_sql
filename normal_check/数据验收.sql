@@ -8,6 +8,26 @@ where ${PartDate:date}
 group by 1
 order by 3 asc
 
+
+-- 核心字段
+    "#event_time"
+    "$part_date"
+    "#zone_offset"
+   "#country_code"
+   "#country"
+   "#device_id"  role_id  uuid  user_id  distinct_id  account_id 
+   "#app_version"
+   "app_name"
+   "sdk_version"
+   "server_id"
+   "server_name"
+
+
+-- 首个事件(enter_game)
+-- 登录事件（enter_game item_change）
+-- first_reg_time 首次注册时间
+-- #server_time #event_time
+
 SELECT 
     role_name,"$part_event","$part_date","#user_id","#event_name"
     ,"#event_time","#account_id"
