@@ -13,6 +13,8 @@ with dialog_show as( -- 流量情况下提示弹窗
     ,"#uuid"
     ,"$part_event"
     ,"#event_time"
+    ,IF((("#zone_offset" IS NOT NULL) AND ("#zone_offset" >= -30) AND ("#zone_offset" <= 30))
+         , date_add('second', CAST((("#zone_offset"-8) * 3600) AS integer), "#event_time"), "#event_time") as local_time
     ,"$part_date"
     ,"#zone_offset"
    ,"#country_code"
@@ -222,6 +224,7 @@ group by 1
 
 select 
    date(a."#event_time") as dt 
+   ,a."#country"
    ,count(distinct a."#device_id") as dialog_show_num
    ,count(distinct b."#device_id") as click_download_num
    ,count(distinct c."#device_id") as download_start_num
@@ -232,8 +235,6 @@ left join click_download b on a."#device_id" = b."#device_id" and date(a."#event
 left join download_start c on a."#device_id" = c."#device_id" and date(a."#event_time") = date(c."#event_time")
 left join download_progress d on a."#device_id" = d."#device_id" and date(a."#event_time") = date(d."#event_time")
 left join download_finish e on a."#device_id" = e."#device_id" and date(a."#event_time") = date(e."#event_time")
-group by 1
+group by 1,2
 
-select 
-from dialog_show a  
-left join 
+-- 增加一个local_time
