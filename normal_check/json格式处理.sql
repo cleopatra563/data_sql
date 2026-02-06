@@ -36,3 +36,6 @@ where "$part_event" = 'select_skills'
 select *
 from(select *,split(skills_group,',') as number_array from tmp)
 cross join unnest (number_array) as temp_table(col)
+
+array_agg(choose_skills) over(partition by role_id,stage_id,sub_stage_id order by "#event_time") as choose_skills_array
+

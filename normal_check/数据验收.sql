@@ -9,6 +9,44 @@ group by 1
 order by 3 asc
 
 
+-- 设备id最早注册时间
+with tmp as(
+select 
+    device_id
+    ,role_id
+    ,"$part_event"
+    ,reg_time
+    ,reg_date
+from(
+select 
+    "#device_id"device_id
+    ,role_id
+    ,"#event_time"reg_time
+    ,"$part_date"reg_date
+    ,"$part_event"
+    ,row_number() over(partition by "#device_id" order by "#event_time") as rn
+from ta.v_event_15 
+where "$part_date" >= '2026-02-03'
+    and "#device_id" in (select "#varchar_id" from user_result_cluster_15 where "cluster_name"='cohort_20260206_113105')
+    ) a       
+where rn = 1 
+    and date(reg_date) = date('2026-02-03')
+)
+
+
+-- 2月3日注册用户，2月5日登录，所触发所有事件
+select    
+    "#device_id"device_id
+    ,"#event_time"
+    ,"$part_date"
+    ,"$part_event"
+from ta.v_event_15 
+where "$part_date" = '2026-02-05'
+    and "#device_id" = 'fd1190969d8edb48'
+order by "#event_time" desc
+
+
+
 -- 核心字段
     "#event_time"
     "$part_date"
@@ -25,7 +63,7 @@ order by 3 asc
 
 -- 首个事件(enter_game)
 -- 登录事件（enter_game item_change）
--- first_reg_time 首次注册时间
+-- first_reg_time 最早注册时间
 -- #server_time #event_time
 
 SELECT 

@@ -55,5 +55,5 @@ where rn = 1
 select device_id,country 
 from base 
 
-select device_id,reg_time 
+select device_id,reg_local_time 
 from base   
