@@ -66,3 +66,15 @@ from
 (select * from country_agg) 
 union all
 (select * from all_agg)
+
+-- SQL伪代码编写
+union all 
+(
+
+select 
+    '合计' as "国家" 
+    ,label as "更新方式"
+from your_table
+
+)
+
