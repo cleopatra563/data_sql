@@ -156,10 +156,10 @@ and "#distinct_id" != 'test'
 )t    
 where rn = 1 
 
-
 with time_conf as (select timestamp '2026-02-03 16:50:00.000' as conf)
 
 /* sessionProperties: {"ignore_downstream_preferences":"true"} */
+-- 角色-均在线时长 计算
 select * 
 from (
     select *,count(data_map_0) over () group_num_0,count(1) over () group_num 
@@ -197,4 +197,4 @@ from (
                                                 ))))) ta_ev 
                     where (((( "$part_event" IN ( 'ta_app_end' )))) and (ta_ev."role_id" IS NOT NULL)) and (("$part_date" = '2026-02-08') and ((ta_ev."@vpc_cluster_role_reg_country_cbt1" IS NOT NULL) and (ta_ev."@vpc_cluster_role_reg_country_cbt1_v2" NOT IN ('中国')))) 
                     group by "$part_date"))))) 
-                    order by total_amount DESC limit 1000
+                    order by total_amount desc limit 1000
