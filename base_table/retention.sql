@@ -1,4 +1,4 @@
--- 再加	lobby_enter
+-- 再加	enter_game
 -- 1,写大盘数据
 -- 2,写LTV
 -- 3,写LTV拆成子商品贡献度
@@ -27,10 +27,10 @@ from (
             ,"#zone_offset"zone_offset
             ,"#event_time"log_time 
             ,"#uuid"uuid 
-        from ta.v_event_4
-        where "$part_event" in('lobby_enter','ta_app_start') 
+        from ta.v_event_15
+        where "$part_event" in('enter_game','ta_app_start') 
         and "$part_date" >= '2025-12-29'
-        and "$part_date" <= '2026-01-07'
+        and "$part_date" <= '2026-02-08'
         ) a         
     ) b
 where rn = 1
@@ -55,10 +55,10 @@ from(
             ,"#zone_offset"zone_offset
             ,"#event_time"reg_time
             ,"#uuid"uuid
-        from ta.v_event_4
-        where "$part_event" in('lobby_enter','ta_app_start')
+        from ta.v_event_15
+        where "$part_event" in('enter_game','ta_app_start')
         and "$part_date" >= '2025-12-29'
-        and "$part_date" <= '2026-01-07'
+        and "$part_date" <= '2026-02-08'
         ) a
     ) b   
 where rn = 1
@@ -82,7 +82,7 @@ left join register t2  -- 小表连大表，小表作为左表
 )
 
 -- 按用户，行转列
-,user_retention as(
+,user_retention as(-- 每个用户N日留存
 select 
     role_id
     ,reg_date
@@ -103,13 +103,26 @@ group by 1,2,3,4,5
     -- 每个连续登录序列的开始和结束日期
     -- 计算流失
 -- https://www.php.cn/faq/1511633.html
-,churn_users as(
-
-
-
-
-
+,login_group as(
+select *
+    ,case when day_diff > 1 then 1 else 0 end as new_group
+    ,sum(case when day_diff > 1 then 1 else 0 end) over(partition by role_id order by log_date) as group_id
+from(
+select 
+    *,date_diff('day',date(lag_log_date),date(log_date)) as day_diff
+from(
+    select 
+        role_id 
+        ,log_date
+        ,lag(log_date) over(partition by role_id order by log_date) as lag_log_date
+    from login
+    ) a
+) b 
 )
+
+select *
+from login_group
+
 
 
 -- 回流用户，窗口期：连续3天未登录，最近7天有登录 ,流失表 left join 登录表 
@@ -129,10 +142,3 @@ group by 1,2,3,4,5
 
 -- 连续登录用户
 
-
-
-
-
-
-select *
-from your_table 
