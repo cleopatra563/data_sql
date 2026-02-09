@@ -159,3 +159,42 @@ where rn = 1
 
 with time_conf as (select timestamp '2026-02-03 16:50:00.000' as conf)
 
+/* sessionProperties: {"ignore_downstream_preferences":"true"} */
+select * 
+from (
+    select *,count(data_map_0) over () group_num_0,count(1) over () group_num 
+    from (
+        select map_agg(if(amount_0 is not null and is_finite(amount_0) , "$__Date_Time", null), amount_0) data_map_0
+              ,map_agg(if(true, "$__Date_Time", null), cast(row(internal_amount_0) as row(internal_amount_0 DOUBLE))) data_part_map_0
+              ,sum(if(is_finite(amount_0) and ("$__Date_Time" <> timestamp '1981-01-01'), amount_0, 0)) total_amount 
+        from (
+            select *, internal_amount_1 amount_0 
+            from (
+                select *, cast(coalesce(internal_amount_0, 0) as double) internal_amount_1 
+                from (
+                    select cast("$part_date" as TIMESTAMP) "$__Date_Time",cast(coalesce(try(try_cast(SUM(cast(ta_ev."#vp@duration" as double)) AS DOUBLE )/COUNT(DISTINCT ta_ev."role_id")), 0) as double) internal_amount_0 
+                    from (
+                        select *, ta_date_trunc('day',"@vpc_tz_#event_time", 1) "$__Date_Time" 
+                        from (
+                            select * from (select *, "#event_time" "@vpc_tz_#event_time" 
+                            from (
+                                select *, try_cast(try(round((CAST("#duration" AS double) / 60), 2)) as double) "#vp@duration" 
+                                from (
+                                    select a.*,"@vpc_cluster_role_reg_country_cbt1","@vpc_cluster_role_reg_country_cbt1_v2" 
+                                    from (
+                                        select "#duration" "#duration","#event_name" "#event_name","#event_time" "#event_time","#user_id" "#user_id","$part_date" "$part_date","$part_event" "$part_event","role_id" "role_id" 
+                                        from (
+                                            select "#user_id", "role_id" "role_id","#event_time" "#event_time","$part_event" "$part_event","#duration" "#duration","$part_date" "$part_date","#event_name" "#event_name" 
+                                            from v_event_15 
+                                            where "$part_event" in ('ta_app_end'))) a 
+                                            left join (
+                                                select "#varchar_id" "id"
+                                                        ,arbitrary(if(cluster_name = 'role_reg_country_cbt1', tag_value, null)) "@vpc_cluster_role_reg_country_cbt1"
+                                                        ,arbitrary(if(cluster_name = 'role_reg_country_cbt1_v2', tag_value, null)) "@vpc_cluster_role_reg_country_cbt1_v2" 
+                                                from user_result_cluster_15 
+                                                where (cluster_name = 'role_reg_country_cbt1') or (cluster_name = 'role_reg_country_cbt1_v2') 
+                                                group by "#varchar_id") b0 on a."role_id"=b0."id"
+                                                ))))) ta_ev 
+                    where (((( "$part_event" IN ( 'ta_app_end' )))) and (ta_ev."role_id" IS NOT NULL)) and (("$part_date" = '2026-02-08') and ((ta_ev."@vpc_cluster_role_reg_country_cbt1" IS NOT NULL) and (ta_ev."@vpc_cluster_role_reg_country_cbt1_v2" NOT IN ('中国')))) 
+                    group by "$part_date"))))) 
+                    order by total_amount DESC limit 1000
