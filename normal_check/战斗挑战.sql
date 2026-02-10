@@ -33,3 +33,5 @@ where role_id in ('US100172')
 
 count(*) filter(where fight_result = 1) as "成功次数"
 sum(case when fight_result = 1 then 1 else 0 end) as "成功次数"
+
+count(*) filter(where fight_rsult = 2) as "失败次数"

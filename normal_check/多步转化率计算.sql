@@ -77,4 +77,3 @@ select
 from your_table
 
 )
-
