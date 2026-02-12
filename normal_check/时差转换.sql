@@ -96,7 +96,6 @@ select reg_local_date,reg_local_hour
        ,sum(iskeep2) as "次日留存人数"
        ,count(distinct role_id) filter(where iskeep2 = 1)  as "次日人数"
 
-
 with role_register as (
 select reg_date,reg_time,role_id
        ,at_timezone(reg_time,'America/New_York') as reg_local_time
@@ -126,13 +125,20 @@ from(
     ) a    
 where rn = 1
 )
+,new_users as(
+select reg_local_hour,reg_local_date,count(distinct role_id) as new
+from role_register
+group by 1,2
+)
 
+select a.reg_local_date,b.reg_local_hour
+       ,cast(retention_2 as double) / nullif(b.new,0) as "次留"
+from(
 select reg_local_date,reg_local_hour
-       ,count(distinct role_id) as "总人数"
-       ,sum(iskeep2)
-       ,count(distinct role_id) filter(where iskeep2 = 1)  as "次日人数"
-       ,count(distinct role_id) filter(where iskeep3 = 1) as "三日人数"
-       ,count(distinct role_id) filter(where iskeep4 = 1) as "四日人数"
+       ,count(distinct role_id) as active
+       ,count(distinct role_id) filter(where iskeep2 = 1) as retention_2
+       ,count(distinct role_id) filter(where iskeep3 = 1) as retention_3
+       ,count(distinct role_id) filter(where iskeep4 = 1) as retention_4
 from (
     select role_id,reg_local_date,reg_local_hour
            ,count(distinct role_id) filter(where day_diff = 2) iskeep2
@@ -150,5 +156,9 @@ from (
          ) t2     
     group by 1,2,3
         ) t3     
-group by 1,2  
+group by 1,2
+    ) a       
+left join (select * from new_users) b   
+    on a.reg_local_date = b.reg_local_date and a.reg_local_hour = b.reg_local_hour
 order by 1,2
+
