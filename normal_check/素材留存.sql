@@ -49,16 +49,15 @@ FROM ta.v_user_15
 where te_ads_object.ad_id is not null 
 )
 
+-- 素材标签
 select a.role_id,array_agg(c.ad_group_name)[1] as ad_group_name
 from(
     select role_id,"$part_date" log_date,"#event_time"log_time,"#user_id"
     from ta.v_event_15
     where "$part_date" >= '2026-02-02'
-        and "$part_event" in ('enter_game')
         and role_id in (select "#varchar_id" from user_result_cluster_15 where "cluster_name"='role_reg_time_cbt1' )
     ) a        
 left join user_ad_id c    
     on a."#user_id" = c."#user_id"
 where ad_group_name is not null
 group by 1
-
