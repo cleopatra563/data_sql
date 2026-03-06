@@ -162,3 +162,37 @@ left join (select * from new_users) b
     on a.reg_local_date = b.reg_local_date and a.reg_local_hour = b.reg_local_hour
 order by 1,2
 
+--分日计算
+-- new_users group by 去掉 hour
+select a.reg_local_date
+       ,b.new
+       ,cast(retention_2 as double) / nullif(b.new,0) as "次留"
+from(
+select reg_local_date
+       ,count(distinct role_id) as active
+       ,count(distinct role_id) filter(where iskeep2 = 1) as retention_2
+       ,count(distinct role_id) filter(where iskeep3 = 1) as retention_3
+       ,count(distinct role_id) filter(where iskeep4 = 1) as retention_4
+from (
+    select role_id,reg_local_date
+           ,count(distinct role_id) filter(where day_diff = 2) iskeep2
+           ,count(distinct role_id) filter(where day_diff = 3) iskeep3
+           ,count(distinct role_id) filter(where day_diff = 4) iskeep4
+    from(
+        select *,date_diff('day',reg_local_date,log_local_date)+1 as day_diff
+        from (
+            select a.*,b.reg_local_date
+            from role_log a      
+            left join role_register b     
+                on a.role_id = b.role_id
+                and a.log_local_time >= b.reg_local_time
+            ) t1     
+         ) t2     
+    group by 1,2
+        ) t3    
+group by 1
+    ) a       
+left join (select * from new_users) b   
+    on a.reg_local_date = b.reg_local_date
+where a.reg_local_date is not null
+order by 1
